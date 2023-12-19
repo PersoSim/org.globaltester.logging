@@ -10,3 +10,4 @@ Export-Package: org.globaltester.logging,
  org.globaltester.logging.format,
  org.globaltester.logging.tags
 Bundle-Vendor: secunet Security Networks AG
+Automatic-Module-Name: org.globaltester.logging

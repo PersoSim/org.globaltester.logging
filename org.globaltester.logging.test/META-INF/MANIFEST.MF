@@ -14,3 +14,4 @@ Require-Bundle: org.eclipse.osgi,
  org.globaltester.logging,
  org.junit,
  org.globaltester.lib.json
+Automatic-Module-Name: org.globaltester.logging.test
