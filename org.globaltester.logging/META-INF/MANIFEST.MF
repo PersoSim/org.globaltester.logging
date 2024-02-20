@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: GT Logging
 Bundle-SymbolicName: org.globaltester.logging
 Bundle-Version: 3.9.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-ActivationPolicy: lazy
 Export-Package: org.globaltester.logging,
  org.globaltester.logging.filter,
