@@ -12,6 +12,5 @@ Import-Package: org.eclipse.core.runtime.preferences,
 Bundle-Vendor: secunet Security Networks AG
 Require-Bundle: org.eclipse.osgi,
  org.globaltester.logging,
- org.junit,
- org.globaltester.lib.json
+ org.junit
 Automatic-Module-Name: org.globaltester.logging.test
