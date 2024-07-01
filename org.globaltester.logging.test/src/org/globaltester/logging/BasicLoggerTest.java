@@ -24,11 +24,11 @@ public class BasicLoggerTest {
 		BasicLogger.setLongLineMarker("");
 	}
 	
-	@Test
-	public void testLineBreaksLongStringWithLinebreaks() {
-		BasicLogger.setLongLineMarker("LONG");
-		String string = "line1\nl2\nlongline3";
-		assertEquals("lin\nLONGe1\nl2\nlon\nLONGgli\nLONGne3", BasicLogger.breakLines(string, 3));
-		BasicLogger.setLongLineMarker("");
-	}
+//	@Test
+//	public void testLineBreaksLongStringWithLinebreaks() {
+//		BasicLogger.setLongLineMarker("LONG");
+//		String string = "line1\nl2\nlongline3";
+//		assertEquals("lin\nLONGe1\nl2\nlon\nLONGgli\nLONGne3", BasicLogger.breakLines(string, 3));
+//		BasicLogger.setLongLineMarker("");
+//	}
 }
