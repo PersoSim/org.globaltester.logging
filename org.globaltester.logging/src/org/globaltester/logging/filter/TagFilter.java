@@ -6,19 +6,22 @@ import java.util.List;
 import org.globaltester.logging.Message;
 import org.globaltester.logging.tags.LogTag;
 
-public class TagFilter implements LogFilter {
+public class TagFilter implements LogFilter
+{
 
-	private String logTagId;
-	private String[] logTagData;
+	protected String logTagId;
+	protected String[] logTagData;
 
 	// Constructor
-	public TagFilter(String logTagId, String... data) {
+	public TagFilter(String logTagId, String... data)
+	{
 		this.logTagId = logTagId;
 		this.logTagData = data;
 	}
-	
+
 	@Override
-	public boolean matches(Message msg) {
+	public boolean matches(Message msg)
+	{
 		if (msg != null) {
 			for (LogTag curTag : msg.getLogTags()) {
 				if (curTag.getId().equals(logTagId)) {
@@ -29,17 +32,17 @@ public class TagFilter implements LogFilter {
 		return false;
 	}
 
-	boolean checkTagForData(LogTag tag) {
-		if (logTagData.length == 0) return true;
-		
+	protected boolean checkTagForData(LogTag tag)
+	{
+		if (logTagData.length == 0)
+			return true;
+
 		List<String> actualTagData = Arrays.asList(tag.getAdditionalData());
 		for (String current : logTagData) {
 			if (actualTagData.contains(current)) {
 				return true;
 			}
 		}
-		
-		
 		return false;
 	}
 
