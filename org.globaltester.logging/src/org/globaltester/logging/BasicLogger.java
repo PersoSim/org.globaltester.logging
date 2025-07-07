@@ -172,6 +172,21 @@ public final class BasicLogger
 		log(className, message, LOGLEVEL_DFLT);
 	}
 
+	/**
+	 * Write message to the log, formatted including origin of that message.
+	 *
+	 * @param source
+	 *            originating origin of this log message
+	 * @param message
+	 *            the message to be logged
+	 * @param logLevel
+	 *            log level on which the message is shown
+	 */
+	private static void log(String source, String message, LogLevel logLevel)
+	{
+		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source));
+	}
+
 	/*--------------------------------------------------------------------------------*/
 
 	/**
@@ -281,63 +296,56 @@ public final class BasicLogger
 		logException(getOriginClass(), message, e, logLevel);
 	}
 
-	/**
-	 * Write message to the log, formatted including origin of that message.
-	 *
-	 * @param source
-	 *            originating origin of this log message
-	 * @param message
-	 *            the message to be logged
-	 * @param logLevel
-	 *            log level on which the message is shown
-	 */
-	private static void log(String source, String message, LogLevel logLevel)
+	public static void logException(String message, Throwable e, LogLevel logLevel, LogTag... logTags)
 	{
-		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source));
+		logException(getOriginClass(), message, e, logLevel, logTags);
 	}
 
 	/**
-	 * Transform an Exception into user readable form and write it to the log,
-	 * including origin of that message.
+	 * Transform an Exception into user readable form and write it to the log, including origin of that message.
 	 *
 	 * @param source
-	 *            origin of this log message
+	 *            Origin of this log message
 	 * @param message
-	 *            the message to be logged
+	 *            The message to be logged
 	 * @param e
 	 *            Exception to be logged
 	 * @param logLevel
-	 *            log level on which the message is shown
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	private static void logException(String source, String message, Throwable e, LogLevel logLevel)
+	private static void logException(String source, String message, Throwable e, LogLevel logLevel, LogTag... logTags)
 	{
-		StringBuilder sb;
-
-		sb = new StringBuilder();
-
-		sb.append("encountered the following exception: ");
-		sb.append(e.getClass().getCanonicalName());
+		StringBuilder sb = new StringBuilder();
+		sb.append("Encountered the following exception: ").append(e.getClass().getCanonicalName());
 
 		try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
 			e.printStackTrace(pw);
-			sb.append("\n");
-			sb.append(sw.toString());
+			sb.append('\n').append(sw.toString());
 		}
-		catch (IOException e1) { // NOSONAR exception stack trace extraction does not work properly, trying to
-									// log this exception will not work either
-			sb.append("\n reason: " + e.getMessage());
-			sb.append("\n no stack trace output possible because of" + e1.toString());
+		catch (IOException e1) {
+			// Exception stack trace extraction does not work properly, trying to log this exception will not work either
+			sb.append("\n reason: " + e.getMessage()).append("\n no stack trace output possible because of " + e1.toString());
 			e1.printStackTrace(); // NOSONAR System.err is valid fallback within logger
 		}
 
-		StackTraceElement[] stackTrace = e.getStackTrace();
+		// StackTraceElement[] stackTrace = e.getStackTrace();
+		// for (StackTraceElement elem : stackTrace) {
+		// sb.append("\n" + elem.toString());
+		// }
 
-		for (StackTraceElement elem : stackTrace) {
-			sb.append("\n" + elem.toString());
-		}
+		int lenExcTags = 2;
+		int lenLogTags = 0;
+		if (logTags != null)
+			lenLogTags = logTags.length;
+		LogTag[] allTags = new LogTag[lenExcTags + lenLogTags];
+		allTags[0] = new LogTag(SOURCE_TAG_ID, source);
+		allTags[1] = new LogTag(EXCEPTION_STACK_TAG_ID, sb.toString());
+		if (logTags != null && lenLogTags > 0)
+			System.arraycopy(logTags, 0, allTags, lenExcTags, lenLogTags);
 
-		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source), new LogTag(EXCEPTION_STACK_TAG_ID, sb.toString()));
-
+		log(message, logLevel, allTags);
 	}
 
 	/**
