@@ -131,30 +131,34 @@ public final class BasicLogger
 	 * Write message to the log, including origin of that message.
 	 *
 	 * @param source
-	 *            origin of this log message
+	 *            Origin of this log message
 	 * @param message
-	 *            the message to be logged
+	 *            The message to be logged
 	 * @param logLevel
-	 *            log level on which the message is shown
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	public static void log(InfoSource source, String message, LogLevel logLevel)
+	public static void log(InfoSource source, String message, LogLevel logLevel, LogTag... logTags)
 	{
-		log(source.getIDString(), message, logLevel);
+		log(source.getIDString(), message, logLevel, logTags);
 	}
 
 	/**
 	 * Write message to the log, including originating class of that message.
 	 *
 	 * @param className
-	 *            originating class of this log message
+	 *            Originating class of this log message
 	 * @param message
-	 *            the message to be logged
+	 *            The message to be logged
 	 * @param logLevel
-	 *            log level on which the message is shown
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	public static void log(Class<?> className, String message, LogLevel logLevel)
+	public static void log(Class<?> className, String message, LogLevel logLevel, LogTag... logTags)
 	{
-		log(className.getCanonicalName(), message, logLevel);
+		log(className.getCanonicalName(), message, logLevel, logTags);
 	}
 
 	/**
@@ -176,15 +180,25 @@ public final class BasicLogger
 	 * Write message to the log, formatted including origin of that message.
 	 *
 	 * @param source
-	 *            originating origin of this log message
+	 *            Originating origin of this log message
 	 * @param message
-	 *            the message to be logged
+	 *            The message to be logged
 	 * @param logLevel
-	 *            log level on which the message is shown
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags (appended to tag SOURCE_TAG_ID)
 	 */
-	private static void log(String source, String message, LogLevel logLevel)
+	private static void log(String source, String message, LogLevel logLevel, LogTag... logTags)
 	{
-		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source));
+		int lenExistingTags = 1;
+		int lenLogTags = 0;
+		if (logTags != null)
+			lenLogTags = logTags.length;
+		LogTag[] allTags = new LogTag[lenExistingTags + lenLogTags];
+		allTags[0] = new LogTag(SOURCE_TAG_ID, source);
+		if (logTags != null && lenLogTags > 0)
+			System.arraycopy(logTags, 0, allTags, lenExistingTags, lenLogTags);
+		log(message, logLevel, allTags);
 	}
 
 	/*--------------------------------------------------------------------------------*/
@@ -335,15 +349,15 @@ public final class BasicLogger
 		// sb.append("\n" + elem.toString());
 		// }
 
-		int lenExcTags = 2;
+		int lenExistingTags = 2;
 		int lenLogTags = 0;
 		if (logTags != null)
 			lenLogTags = logTags.length;
-		LogTag[] allTags = new LogTag[lenExcTags + lenLogTags];
+		LogTag[] allTags = new LogTag[lenExistingTags + lenLogTags];
 		allTags[0] = new LogTag(SOURCE_TAG_ID, source);
 		allTags[1] = new LogTag(EXCEPTION_STACK_TAG_ID, sb.toString());
 		if (logTags != null && lenLogTags > 0)
-			System.arraycopy(logTags, 0, allTags, lenExcTags, lenLogTags);
+			System.arraycopy(logTags, 0, allTags, lenExistingTags, lenLogTags);
 
 		log(message, logLevel, allTags);
 	}
