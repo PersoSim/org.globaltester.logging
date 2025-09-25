@@ -5,37 +5,39 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringJoiner;
 
 import org.globaltester.logging.tags.LogLevel;
 import org.globaltester.logging.tags.LogTag;
 
 /**
  * This class is a Logger with basic functionalities.
- * 
+ *
  * @author amay
- * 
+ *
  */
-public final class BasicLogger {
-
+public final class BasicLogger
+{
 	public static final String ORIGIN_CLASS_TAG_ID = "Originating class";
-	public static final String SOURCE_TAG_ID = "Source";
-	public static final String EXCEPTION_STACK_TAG_ID = "Exception stack trace";
 	public static final String ORIGIN_THREAD_GROUP_TAG_ID = "Originating thread group";
 	public static final String LOG_LEVEL_TAG_ID = "Logging level";
-	public static final String UI_TAG_ID = "User interface message";
 	public static final String TIMESTAMP_TAG_ID = "Timestamp";
+
+	public static final String SOURCE_TAG_ID = "Source";
+	public static final String EXCEPTION_STACK_TAG_ID = "Exception stack trace";
+
+	public static final String LOG_TAG_TAG_ID = "Logging tag";
+
 	public static final int DEFAULT_LINE_BREAK_THRESHOLD = 3000;
 
 	private static final LogLevel LOGLEVEL_DFLT = LogLevel.DEBUG;
 	private static List<LogListener> listeners = new LinkedList<>();
-
 	private static String longLineMarker = "LINETOLONG\t";
 
 	/**
 	 * Ensure that this type can not be instantiated
 	 */
-	private BasicLogger() {
+	private BasicLogger()
+	{
 	}
 
 	/**
@@ -43,7 +45,8 @@ public final class BasicLogger {
 	 * @param newListener
 	 * @return
 	 */
-	public static boolean addLogListener(LogListener newListener) {
+	public static boolean addLogListener(LogListener newListener)
+	{
 		return listeners.add(newListener);
 	}
 
@@ -52,11 +55,13 @@ public final class BasicLogger {
 	 * @param newListener
 	 * @return
 	 */
-	public static boolean removeLogListener(LogListener listener) {
+	public static boolean removeLogListener(LogListener listener)
+	{
 		return listeners.remove(listener);
 	}
 
-	public static void log(String messageContent, LogLevel level, LogTag... logTags) {
+	public static void log(String messageContent, LogLevel level, LogTag... logTags)
+	{
 		messageContent = breakLines(messageContent, DEFAULT_LINE_BREAK_THRESHOLD);
 
 		Message newMessage = new Message(messageContent, logTags);
@@ -72,7 +77,8 @@ public final class BasicLogger {
 		if (listeners.isEmpty()) {
 			if (level.ordinal() <= LogLevel.ERROR.ordinal()) {
 				System.err.println(messageContent); // NOSONAR System.out is valid fallback within logger
-			} else {
+			}
+			else {
 				System.out.println(messageContent); // NOSONAR System.out is valid fallback within logger
 			}
 		}
@@ -80,258 +86,345 @@ public final class BasicLogger {
 	}
 
 	/**
-	 * Find the first external class where the call to the logging methods occured
+	 * Find the first external class where the call to the logging methods occurred
 	 * or return the calling class to this method if no external could be found.
-	 * 
+	 *
 	 * @return the originating class name
 	 */
-	private static String getOriginClass() {
+	private static String getOriginClass()
+	{
 		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+		String[] skipPrefixes = { "java.", "org.globaltester.logging." };
+
 		for (StackTraceElement curElem : stack) {
-			if (curElem.getClassName().startsWith("java.")) {
-				continue;
+			String className = curElem.getClassName();
+			boolean skip = false;
+			for (String prefix : skipPrefixes) {
+				if (className.startsWith(prefix)) {
+					skip = true;
+					break;
+				}
 			}
-
-			if (curElem.getClassName().startsWith("org.globaltester.logging.")) {
-				continue;
+			if (!skip) {
+				return className;
 			}
-
-			return curElem.getClassName();
 		}
 		return "unknown origin class";
 	}
 
 	/**
 	 * Write message to the log, including origin of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param source  origin of this log message
-	 * @param message the message to be logged
+	 *
+	 * @param source
+	 *            origin of this log message
+	 * @param message
+	 *            the message to be logged
 	 */
-	public static void log(InfoSource source, String message) {
+	public static void log(InfoSource source, String message)
+	{
 		log(source, message, LOGLEVEL_DFLT);
 	}
 
 	/**
 	 * Write message to the log, including origin of that message.
-	 * 
-	 * @param source   origin of this log message
-	 * @param message  the message to be logged
-	 * @param logLevel log level on which the message is shown
+	 *
+	 * @param source
+	 *            Origin of this log message
+	 * @param message
+	 *            The message to be logged
+	 * @param logLevel
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	public static void log(InfoSource source, String message, LogLevel logLevel) {
-		log(source.getIDString(), message, logLevel);
+	public static void log(InfoSource source, String message, LogLevel logLevel, LogTag... logTags)
+	{
+		log(source.getIDString(), message, logLevel, logTags);
 	}
 
 	/**
 	 * Write message to the log, including originating class of that message.
-	 * 
-	 * @param className originating class of this log message
-	 * @param message   the message to be logged
-	 * @param logLevel  log level on which the message is shown
+	 *
+	 * @param className
+	 *            Originating class of this log message
+	 * @param message
+	 *            The message to be logged
+	 * @param logLevel
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	public static void log(Class<?> className, String message, LogLevel logLevel) {
-		log(className.getCanonicalName(), message, logLevel);
+	public static void log(Class<?> className, String message, LogLevel logLevel, LogTag... logTags)
+	{
+		log(className.getCanonicalName(), message, logLevel, logTags);
 	}
 
 	/**
 	 * Write message to the log, including originating class of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param className originating class of this log message
-	 * @param message   the message to be logged
+	 *
+	 * @param className
+	 *            originating class of this log message
+	 * @param message
+	 *            the message to be logged
 	 */
-	public static void log(Class<?> className, String message) {
+	public static void log(Class<?> className, String message)
+	{
 		log(className, message, LOGLEVEL_DFLT);
+	}
+
+	/**
+	 * Write message to the log, formatted including origin of that message.
+	 *
+	 * @param source
+	 *            Originating origin of this log message
+	 * @param message
+	 *            The message to be logged
+	 * @param logLevel
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags (appended to tag SOURCE_TAG_ID)
+	 */
+	private static void log(String source, String message, LogLevel logLevel, LogTag... logTags)
+	{
+		int lenExistingTags = 1;
+		int lenLogTags = 0;
+		if (logTags != null)
+			lenLogTags = logTags.length;
+		LogTag[] allTags = new LogTag[lenExistingTags + lenLogTags];
+		allTags[0] = new LogTag(SOURCE_TAG_ID, source);
+		if (logTags != null && lenLogTags > 0)
+			System.arraycopy(logTags, 0, allTags, lenExistingTags, lenLogTags);
+		log(message, logLevel, allTags);
 	}
 
 	/*--------------------------------------------------------------------------------*/
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param source origin of this log message
-	 * @param e      the Exception to be logged
+	 *
+	 * @param source
+	 *            origin of this log message
+	 * @param e
+	 *            the Exception to be logged
 	 */
-	public static void logException(InfoSource source, Throwable e) {
+	public static void logException(InfoSource source, Throwable e)
+	{
 		logException(source, e, LOGLEVEL_DFLT);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param source  origin of this log message
-	 * @param message the message to be logged
-	 * @param e       the Exception to be logged
+	 *
+	 * @param source
+	 *            origin of this log message
+	 * @param message
+	 *            the message to be logged
+	 * @param e
+	 *            the Exception to be logged
 	 */
-	public static void logException(InfoSource source, String message, Throwable e) {
+	public static void logException(InfoSource source, String message, Throwable e)
+	{
 		logException(source, message, e, LOGLEVEL_DFLT);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
-	 * @param source   origin of this log message
-	 * @param e        the Exception to be logged
-	 * @param logLevel log level on which the exception is shown
+	 *
+	 * @param source
+	 *            origin of this log message
+	 * @param e
+	 *            the Exception to be logged
+	 * @param logLevel
+	 *            log level on which the exception is shown
 	 */
-	public static void logException(InfoSource source, Throwable e, LogLevel logLevel) {
+	public static void logException(InfoSource source, Throwable e, LogLevel logLevel)
+	{
 		logException(source, e.getMessage(), e, logLevel);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
-	 * @param source   origin of this log message
-	 * @param e        the Exception to be logged
-	 * @param logLevel log level on which the exception is shown
+	 *
+	 * @param source
+	 *            origin of this log message
+	 * @param e
+	 *            the Exception to be logged
+	 * @param logLevel
+	 *            log level on which the exception is shown
 	 */
-	public static void logException(InfoSource source, String message, Throwable e, LogLevel logLevel) {
+	public static void logException(InfoSource source, String message, Throwable e, LogLevel logLevel)
+	{
 		logException(source.getIDString(), message, e, logLevel);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
-	 * @param className originating class of this log message
-	 * @param e         the Exception to be logged
-	 * @param logLevel  log level on which the exception is shown
+	 *
+	 * @param className
+	 *            originating class of this log message
+	 * @param e
+	 *            the Exception to be logged
+	 * @param logLevel
+	 *            log level on which the exception is shown
 	 */
-	public static void logException(Class<?> className, Throwable e, LogLevel logLevel) {
+	public static void logException(Class<?> className, Throwable e, LogLevel logLevel)
+	{
 		logException(className.getCanonicalName(), e.getMessage(), e, logLevel);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
-	 * @param className originating class of this log message
-	 * @param e         the Exception to be logged
-	 * @param logLevel  log level on which the exception is shown
+	 *
+	 * @param className
+	 *            originating class of this log message
+	 * @param e
+	 *            the Exception to be logged
+	 * @param logLevel
+	 *            log level on which the exception is shown
 	 */
-	public static void logException(Class<?> className, String message, Throwable e, LogLevel logLevel) {
+	public static void logException(Class<?> className, String message, Throwable e, LogLevel logLevel)
+	{
 		logException(className.getCanonicalName(), message, e, logLevel);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
-	 * @param message  the message to be logged
-	 * @param e        the Exception to be logged
-	 * @param logLevel log level on which the exception is shown
+	 *
+	 * @param message
+	 *            the message to be logged
+	 * @param e
+	 *            the Exception to be logged
+	 * @param logLevel
+	 *            log level on which the exception is shown
 	 */
-	public static void logException(String message, Throwable e, LogLevel logLevel) {
+	public static void logException(String message, Throwable e, LogLevel logLevel)
+	{
 		logException(getOriginClass(), message, e, logLevel);
 	}
 
-	/**
-	 * Write message to the log, formatted including origin of that message.
-	 * 
-	 * @param source   originating origin of this log message
-	 * @param message  the message to be logged
-	 * @param logLevel log level on which the message is shown
-	 */
-	private static void log(String source, String message, LogLevel logLevel) {
-		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source));
+	public static void logException(String message, Throwable e, LogLevel logLevel, LogTag... logTags)
+	{
+		logException(getOriginClass(), message, e, logLevel, logTags);
 	}
 
 	/**
-	 * Transform an Exception into user readable form and write it to the log,
-	 * including origin of that message.
-	 * 
-	 * @param source   origin of this log message
-	 * @param message  the message to be logged
-	 * @param e        Exception to be logged
-	 * @param logLevel log level on which the message is shown
+	 * Transform an Exception into user readable form and write it to the log, including origin of that message.
+	 *
+	 * @param source
+	 *            Origin of this log message
+	 * @param message
+	 *            The message to be logged
+	 * @param e
+	 *            Exception to be logged
+	 * @param logLevel
+	 *            Log level on which the message is shown
+	 * @param logTags
+	 *            Additional log tags
 	 */
-	private static void logException(String source, String message, Throwable e, LogLevel logLevel) {
-		StringBuilder sb;
-
-		sb = new StringBuilder();
-
-		sb.append("encountered the following exception: ");
-		sb.append(e.getClass().getCanonicalName());
+	private static void logException(String source, String message, Throwable e, LogLevel logLevel, LogTag... logTags)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("Encountered the following exception: ").append(e.getClass().getCanonicalName());
 
 		try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
 			e.printStackTrace(pw);
-			sb.append("\n");
-			sb.append(sw.toString());
-		} catch (IOException e1) { // NOSONAR exception stack trace extraction does not work properly, trying to
-									// log this exception will not work either
-			sb.append("\n reason: " + e.getMessage());
-			sb.append("\n no stack trace output possible because of" + e1.toString());
+			sb.append('\n').append(sw.toString());
+		}
+		catch (IOException e1) {
+			// Exception stack trace extraction does not work properly, trying to log this exception will not work either
+			sb.append("\n reason: " + e.getMessage()).append("\n no stack trace output possible because of " + e1.toString());
 			e1.printStackTrace(); // NOSONAR System.err is valid fallback within logger
 		}
 
-		StackTraceElement[] stackTrace = e.getStackTrace();
+		// StackTraceElement[] stackTrace = e.getStackTrace();
+		// for (StackTraceElement elem : stackTrace) {
+		// sb.append("\n" + elem.toString());
+		// }
 
-		for (StackTraceElement elem : stackTrace) {
-			sb.append("\n" + elem.toString());
-		}
+		int lenExistingTags = 2;
+		int lenLogTags = 0;
+		if (logTags != null)
+			lenLogTags = logTags.length;
+		LogTag[] allTags = new LogTag[lenExistingTags + lenLogTags];
+		allTags[0] = new LogTag(SOURCE_TAG_ID, source);
+		allTags[1] = new LogTag(EXCEPTION_STACK_TAG_ID, sb.toString());
+		if (logTags != null && lenLogTags > 0)
+			System.arraycopy(logTags, 0, allTags, lenExistingTags, lenLogTags);
 
-		log(message, logLevel, new LogTag(SOURCE_TAG_ID, source), new LogTag(EXCEPTION_STACK_TAG_ID, sb.toString()));
-
+		log(message, logLevel, allTags);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param className originating class of this log message
-	 * @param e         the Exception to be logged
+	 *
+	 * @param className
+	 *            originating class of this log message
+	 * @param e
+	 *            the Exception to be logged
 	 */
-	public static void logException(Class<?> className, Exception e) {
+	public static void logException(Class<?> className, Exception e)
+	{
 		logException(className, e, LOGLEVEL_DFLT);
 	}
 
 	/**
 	 * Write exception to the log, including origin of that message.
-	 * 
+	 *
 	 * This method uses LOGLEVEL_DLFT as LogLevel.
-	 * 
-	 * @param className originating class of this log message
-	 * @param e         the Exception to be logged
+	 *
+	 * @param className
+	 *            originating class of this log message
+	 * @param e
+	 *            the Exception to be logged
 	 */
-	public static void logException(Class<?> className, String message, Exception e) {
+	public static void logException(Class<?> className, String message, Exception e)
+	{
 		logException(className, message, e, LOGLEVEL_DFLT);
 	}
 
-	public static String breakLines(String logString, int lineBreakThreshold) {
+	public static String breakLines(String logString, int lineBreakThreshold)
+	{
 		if (logString == null) {
-			return logString;
+			return null;
 		}
-		String[] logStringParts = logString.split(System.lineSeparator());
-		String result = "";
+		String[] logStringParts = logString.split("\\R");
+		StringBuilder result = new StringBuilder();
+
 		for (int i = 0; i < logStringParts.length; i++) {
 			String part = logStringParts[i];
-			if (part != null && part.length() >= lineBreakThreshold) {
-				StringJoiner joiner = new StringJoiner("\n" + longLineMarker);
-
-				while (!part.isEmpty()) {
-					joiner.add(part.subSequence(0,
-							lineBreakThreshold < part.length() ? lineBreakThreshold : part.length()));
-					part = part.substring(
-							lineBreakThreshold < part.length() ? lineBreakThreshold : part.length());
+			if (part != null && part.length() > lineBreakThreshold) {
+				int start = 0;
+				while (start < part.length()) {
+					int end = Math.min(start + lineBreakThreshold, part.length());
+					result.append(part, start, end);
+					start = end;
+					if (start < part.length()) {
+						result.append(System.lineSeparator()).append(longLineMarker);
+					}
 				}
-				result += joiner.toString();
-			} else {
-				result += part;
+			}
+			else {
+				result.append(part);
 			}
 			if (i != logStringParts.length - 1) {
-				result += System.lineSeparator();
+				result.append(System.lineSeparator());
 			}
 		}
-		return result;
-
+		return result.toString();
 	}
 
-	public static void setLongLineMarker(String longLineMarker) {
+	public static void setLongLineMarker(String longLineMarker)
+	{
 		BasicLogger.longLineMarker = longLineMarker;
 	}
 }
